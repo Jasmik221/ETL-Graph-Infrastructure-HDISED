@@ -220,6 +220,12 @@ ORDER BY degree DESC
 
 ---
 
+### Error Validation Report
+
+![Validation Report](docs/screenshots/raport_error.png)
+
+---
+
 ## How To Run
 
 ### Install dependencies
@@ -256,12 +262,5 @@ neo4j/queries.cypher
 
 ---
 
-## Future Improvements
 
-- GIS integration with PostGIS
-- Interactive graph visualization with PyVis
-- FastAPI REST API
-- Docker support
-- Advanced graph analytics
-- Automatic validation reports in JSON format
 
