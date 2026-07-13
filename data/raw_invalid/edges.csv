@@ -1,0 +1,5 @@
+source,target,type,length,status
+1,2,power_line,120,active
+2,3,power_line,-50,active
+3,99,service_line,20,active
+1,2,power_line,120,active

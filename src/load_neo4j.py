@@ -1,9 +1,26 @@
 import pandas as pd
 from neo4j import GraphDatabase
 
-URI = "bolt://localhost:7687"
-USERNAME = "neo4j"
-PASSWORD = "MASNOni1906"
+import os
+from pathlib import Path
+
+import pandas as pd
+from dotenv import load_dotenv
+from neo4j import GraphDatabase
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / ".env")
+
+URI = os.getenv("NEO4J_URI")
+USERNAME = os.getenv("NEO4J_USER")
+PASSWORD = os.getenv("NEO4J_PASSWORD")
+
+if not URI or not USERNAME or not PASSWORD:
+    raise RuntimeError(
+        "Brakuje danych logowania do Neo4j. "
+        "Sprawdź plik .env."
+    )
 
 NODES_PATH = "data/processed/processed_nodes.csv"
 EDGES_PATH = "data/processed/processed_edges.csv"

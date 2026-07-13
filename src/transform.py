@@ -1,27 +1,45 @@
-import pandas as pd
 from pathlib import Path
 
-# Define input and output directories
-RAW_DIR = Path("data/raw")
-PROCESSED_DIR = Path("data/processed")
+import pandas as pd
+
+
+# ---------------------------------------------------
+# Project paths
+# ---------------------------------------------------
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+RAW_DIR = BASE_DIR / "data" / "raw"
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
+
+NODES_PATH = RAW_DIR / "nodes.csv"
+EDGES_PATH = RAW_DIR / "edges.csv"
+
+PROCESSED_NODES_PATH = PROCESSED_DIR / "processed_nodes.csv"
+PROCESSED_EDGES_PATH = PROCESSED_DIR / "processed_edges.csv"
 
 # Create processed directory if it does not exist
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-# Load raw datasets
-nodes = pd.read_csv(RAW_DIR / "nodes.csv")
-edges = pd.read_csv(RAW_DIR / "edges.csv")
 
 # ---------------------------------------------------
-# STEP 1: Remove duplicated nodes
+# Load raw datasets
 # ---------------------------------------------------
-# Duplicate node IDs may cause issues during graph import
+
+nodes = pd.read_csv(NODES_PATH)
+edges = pd.read_csv(EDGES_PATH)
+
+
+# ---------------------------------------------------
+# 1. Remove duplicated nodes
+# ---------------------------------------------------
+
 nodes = nodes.drop_duplicates(subset=["id"])
 
+
 # ---------------------------------------------------
-# STEP 2: Validate edge references
+# 2. Remove edges referencing non-existing nodes
 # ---------------------------------------------------
-# Keep only edges where both source and target nodes exist
 
 valid_node_ids = set(nodes["id"])
 
@@ -30,29 +48,32 @@ edges = edges[
     & edges["target"].isin(valid_node_ids)
 ].copy()
 
-# ---------------------------------------------------
-# STEP 3: Standardize column names
-# ---------------------------------------------------
-# Rename columns to make them compatible with Neo4j import
-
-nodes = nodes.rename(columns={
-    "id": "node_id"
-})
 
 # ---------------------------------------------------
-# STEP 4: Save processed datasets
+# 3. Standardize column names for Neo4j
 # ---------------------------------------------------
-# Export cleaned and validated data for graph import
+
+nodes = nodes.rename(
+    columns={
+        "id": "node_id"
+    }
+)
+
+
+# ---------------------------------------------------
+# 4. Save processed datasets
+# ---------------------------------------------------
 
 nodes.to_csv(
-    PROCESSED_DIR / "processed_nodes.csv",
+    PROCESSED_NODES_PATH,
     index=False
 )
 
 edges.to_csv(
-    PROCESSED_DIR / "processed_edges.csv",
+    PROCESSED_EDGES_PATH,
     index=False
 )
+
 
 # ---------------------------------------------------
 # Final summary
@@ -61,3 +82,5 @@ edges.to_csv(
 print("Transformation completed successfully.")
 print(f"Total processed nodes: {len(nodes)}")
 print(f"Total processed edges: {len(edges)}")
+print(f"Processed nodes saved to: {PROCESSED_NODES_PATH}")
+print(f"Processed edges saved to: {PROCESSED_EDGES_PATH}")

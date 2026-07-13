@@ -1,0 +1,7 @@
+id,name,type,x,y,status
+1,PowerPlant,source,19.00,50.25,active
+2,Transformer_A,transformer,19.01,50.26,active
+2,Transformer_Duplicate,transformer,19.02,50.27,active
+3,Junction_A,wrong_type,19.03,50.28,active
+4,Client_A,client,19.04,50.29,unknown
+5,Isolated_Node,station,19.05,50.30,active

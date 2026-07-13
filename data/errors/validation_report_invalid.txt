@@ -1,0 +1,25 @@
+=== ETL DATA VALIDATION REPORT ===
+
+1. BASIC STATISTICS
+- Total nodes: 6
+- Total edges: 4
+- Connected components: 3
+
+2. VALIDATION RESULTS
+- Critical errors: 5
+- Warnings: 3
+
+3. CRITICAL ERRORS
+- nodes.csv: found 1 duplicated node IDs
+- edges.csv: 1 edges contain invalid target nodes
+- nodes.csv: found 1 invalid node types
+- nodes.csv: found 1 invalid node statuses
+- edges.csv: found 1 edges with length <= 0
+
+4. WARNINGS
+- edges.csv: found 1 duplicated edges
+- Found 2 isolated nodes without any connections
+- Graph is not fully connected. Number of connected components: 3
+
+5. FINAL STATUS
+VALIDATION FAILED

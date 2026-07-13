@@ -1,24 +1,53 @@
-import os
-import pandas as pd
-import networkx as nx
+from pathlib import Path
 
-NODES_PATH = "data/raw/nodes.csv"
-EDGES_PATH = "data/raw/edges.csv"
-REPORT_PATH = "data/errors/validation_report.txt"
+import networkx as nx
+import pandas as pd
+
+
+# ---------------------------------------------------
+# Project paths
+# ---------------------------------------------------
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+RAW_DIR = BASE_DIR / "data" / "raw_invalid"
+ERROR_DIR = BASE_DIR / "data" / "errors"
+
+NODES_PATH = RAW_DIR / "nodes.csv"
+EDGES_PATH = RAW_DIR / "edges.csv"
+REPORT_PATH = ERROR_DIR / "validation_report_invalid.txt"
+
+# Create the output directory if it does not exist
+ERROR_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# ---------------------------------------------------
+# Load raw datasets
+# ---------------------------------------------------
 
 nodes = pd.read_csv(NODES_PATH)
 edges = pd.read_csv(EDGES_PATH)
 
+
+# ---------------------------------------------------
+# Validation containers
+# ---------------------------------------------------
+
 errors = []
 warnings = []
 
-os.makedirs("data/errors", exist_ok=True)
 
+# ---------------------------------------------------
 # Basic statistics
+# ---------------------------------------------------
+
 total_nodes = len(nodes)
 total_edges = len(edges)
 
+
+# ---------------------------------------------------
 # 1. Missing values validation
+# ---------------------------------------------------
+
 missing_nodes = nodes.isnull().sum()
 missing_edges = edges.isnull().sum()
 
@@ -34,7 +63,11 @@ for column, count in missing_edges.items():
             f"edges.csv: column '{column}' contains {count} missing values"
         )
 
+
+# ---------------------------------------------------
 # 2. Duplicate node IDs
+# ---------------------------------------------------
+
 duplicate_nodes = nodes[nodes["id"].duplicated()]
 
 if not duplicate_nodes.empty:
@@ -42,7 +75,11 @@ if not duplicate_nodes.empty:
         f"nodes.csv: found {len(duplicate_nodes)} duplicated node IDs"
     )
 
+
+# ---------------------------------------------------
 # 3. Duplicate edges
+# ---------------------------------------------------
+
 duplicate_edges = edges[
     edges.duplicated(subset=["source", "target"])
 ]
@@ -52,7 +89,11 @@ if not duplicate_edges.empty:
         f"edges.csv: found {len(duplicate_edges)} duplicated edges"
     )
 
+
+# ---------------------------------------------------
 # 4. Referential integrity validation
+# ---------------------------------------------------
+
 node_ids = set(nodes["id"])
 
 invalid_sources = edges[
@@ -73,7 +114,11 @@ if not invalid_targets.empty:
         f"edges.csv: {len(invalid_targets)} edges contain invalid target nodes"
     )
 
+
+# ---------------------------------------------------
 # 5. Isolated nodes validation
+# ---------------------------------------------------
+
 connected_nodes = set(edges["source"]).union(set(edges["target"]))
 
 isolated_nodes = nodes[
@@ -85,13 +130,17 @@ if not isolated_nodes.empty:
         f"Found {len(isolated_nodes)} isolated nodes without any connections"
     )
 
+
+# ---------------------------------------------------
 # 6. Node type validation
+# ---------------------------------------------------
+
 allowed_node_types = {
     "source",
     "transformer",
     "junction",
     "station",
-    "client"
+    "client",
 }
 
 invalid_node_types = nodes[
@@ -103,8 +152,15 @@ if not invalid_node_types.empty:
         f"nodes.csv: found {len(invalid_node_types)} invalid node types"
     )
 
+
+# ---------------------------------------------------
 # 7. Status validation
-allowed_statuses = {"active", "inactive"}
+# ---------------------------------------------------
+
+allowed_statuses = {
+    "active",
+    "inactive",
+}
 
 invalid_node_statuses = nodes[
     ~nodes["status"].isin(allowed_statuses)
@@ -124,9 +180,12 @@ if not invalid_edge_statuses.empty:
         f"edges.csv: found {len(invalid_edge_statuses)} invalid edge statuses"
     )
 
-# 8. Edge length validation
-if "length" in edges.columns:
 
+# ---------------------------------------------------
+# 8. Edge length validation
+# ---------------------------------------------------
+
+if "length" in edges.columns:
     invalid_lengths = edges[
         edges["length"] <= 0
     ]
@@ -136,32 +195,40 @@ if "length" in edges.columns:
             f"edges.csv: found {len(invalid_lengths)} edges with length <= 0"
         )
 
+
+# ---------------------------------------------------
 # 9. Graph connectivity analysis
+# ---------------------------------------------------
+
 valid_edges = edges[
     edges["source"].isin(node_ids)
     & edges["target"].isin(node_ids)
 ]
 
-G = nx.Graph()
+graph = nx.Graph()
 
-G.add_nodes_from(nodes["id"])
+graph.add_nodes_from(nodes["id"])
 
-G.add_edges_from(
+graph.add_edges_from(
     valid_edges[["source", "target"]]
     .itertuples(index=False, name=None)
 )
 
-connected_components = list(nx.connected_components(G))
+connected_components = list(nx.connected_components(graph))
 components_count = len(connected_components)
 
 if components_count > 1:
     warnings.append(
-        f"Graph is not fully connected. Number of connected components: {components_count}"
+        "Graph is not fully connected. "
+        f"Number of connected components: {components_count}"
     )
 
-# Save validation report
-with open(REPORT_PATH, "w", encoding="utf-8") as file:
 
+# ---------------------------------------------------
+# Save validation report
+# ---------------------------------------------------
+
+with open(REPORT_PATH, "w", encoding="utf-8") as file:
     file.write("=== ETL DATA VALIDATION REPORT ===\n\n")
 
     file.write("1. BASIC STATISTICS\n")
@@ -195,5 +262,6 @@ with open(REPORT_PATH, "w", encoding="utf-8") as file:
         file.write("VALIDATION FAILED\n")
     else:
         file.write("VALIDATION SUCCESS\n")
+
 
 print(f"Validation report saved to {REPORT_PATH}")
